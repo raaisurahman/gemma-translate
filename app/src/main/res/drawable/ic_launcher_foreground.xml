@@ -3,6 +3,6 @@
     <item
         android:width="66dp"
         android:height="66dp"
-        android:drawable="@drawable/gemma_translator_icon_1785979063467"
+        android:drawable="@drawable/g_logo_app_icon_1785988394779"
         android:gravity="center" />
 </layer-list>

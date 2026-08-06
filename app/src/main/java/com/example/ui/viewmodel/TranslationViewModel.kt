@@ -145,17 +145,22 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
                 override fun onResults(resultText: String) {
                     _isTopListening.value = false
                     _topRms.value = 0f
-                    if (resultText.isNotBlank()) {
-                        _topSpeakerInput.value = resultText
-                        translateAndSpeak(SpeakerRole.TOURIST, resultText)
+                    val finalText = if (resultText.isNotBlank()) resultText else _topSpeakerInput.value
+                    if (finalText.isNotBlank()) {
+                        _topSpeakerInput.value = finalText
+                        translateAndSpeak(SpeakerRole.TOURIST, finalText)
                     }
                 }
 
                 override fun onError(errorMsg: String) {
                     _isTopListening.value = false
                     _topRms.value = 0f
-                    // If recognition unavailable or empty, prompt error gracefully
-                    _errorMessage.value = errorMsg
+                    val capturedText = _topSpeakerInput.value
+                    if (capturedText.isNotBlank()) {
+                        translateAndSpeak(SpeakerRole.TOURIST, capturedText)
+                    } else if (errorMsg.isNotBlank()) {
+                        _errorMessage.value = errorMsg
+                    }
                 }
             }
         )
@@ -164,11 +169,16 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
     fun stopListeningTop() {
         if (_isTopListening.value) {
             speechHelper.stopListening()
-            _isTopListening.value = false
-            _topRms.value = 0f
-            val text = _topSpeakerInput.value
-            if (text.isNotBlank()) {
-                translateAndSpeak(SpeakerRole.TOURIST, text)
+            viewModelScope.launch {
+                kotlinx.coroutines.delay(400)
+                if (_isTopListening.value) {
+                    _isTopListening.value = false
+                    _topRms.value = 0f
+                    val text = _topSpeakerInput.value
+                    if (text.isNotBlank() && _topSpeakerTranslation.value.isBlank()) {
+                        translateAndSpeak(SpeakerRole.TOURIST, text)
+                    }
+                }
             }
         }
     }
@@ -198,16 +208,22 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
                 override fun onResults(resultText: String) {
                     _isBottomListening.value = false
                     _bottomRms.value = 0f
-                    if (resultText.isNotBlank()) {
-                        _bottomSpeakerInput.value = resultText
-                        translateAndSpeak(SpeakerRole.LOCAL, resultText)
+                    val finalText = if (resultText.isNotBlank()) resultText else _bottomSpeakerInput.value
+                    if (finalText.isNotBlank()) {
+                        _bottomSpeakerInput.value = finalText
+                        translateAndSpeak(SpeakerRole.LOCAL, finalText)
                     }
                 }
 
                 override fun onError(errorMsg: String) {
                     _isBottomListening.value = false
                     _bottomRms.value = 0f
-                    _errorMessage.value = errorMsg
+                    val capturedText = _bottomSpeakerInput.value
+                    if (capturedText.isNotBlank()) {
+                        translateAndSpeak(SpeakerRole.LOCAL, capturedText)
+                    } else if (errorMsg.isNotBlank()) {
+                        _errorMessage.value = errorMsg
+                    }
                 }
             }
         )
@@ -216,11 +232,16 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
     fun stopListeningBottom() {
         if (_isBottomListening.value) {
             speechHelper.stopListening()
-            _isBottomListening.value = false
-            _bottomRms.value = 0f
-            val text = _bottomSpeakerInput.value
-            if (text.isNotBlank()) {
-                translateAndSpeak(SpeakerRole.LOCAL, text)
+            viewModelScope.launch {
+                kotlinx.coroutines.delay(400)
+                if (_isBottomListening.value) {
+                    _isBottomListening.value = false
+                    _bottomRms.value = 0f
+                    val text = _bottomSpeakerInput.value
+                    if (text.isNotBlank() && _bottomSpeakerTranslation.value.isBlank()) {
+                        translateAndSpeak(SpeakerRole.LOCAL, text)
+                    }
+                }
             }
         }
     }

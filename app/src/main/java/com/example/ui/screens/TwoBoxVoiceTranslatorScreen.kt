@@ -1,6 +1,10 @@
 package com.example.ui.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
@@ -36,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.example.data.model.Language
 import com.example.data.model.SpeakerRole
 import com.example.ui.components.GemmaModelDownloadCard
@@ -51,6 +56,21 @@ fun TwoBoxVoiceTranslatorScreen(
 ) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
+
+    // Request RECORD_AUDIO Permission on App Launch
+    val micPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (!isGranted) {
+            Toast.makeText(context, "Microphone permission is required for voice translation.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
 
     val topLang by viewModel.topSpeakerLang.collectAsState()
     val bottomLang by viewModel.bottomSpeakerLang.collectAsState()
@@ -229,7 +249,13 @@ fun TwoBoxVoiceTranslatorScreen(
             contentColor = Color.White,          // Crisp High Contrast White Text
             testTagPrefix = "top_speaker",
             onChangeLanguage = { showTopLangSheet = true },
-            onPressStart = { viewModel.startListeningTop() },
+            onPressStart = {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                    viewModel.startListeningTop()
+                } else {
+                    micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                }
+            },
             onPressStop = { viewModel.stopListeningTop() },
             onSpeakOutput = { text ->
                 viewModel.speakText(text, bottomLang.code)
@@ -292,7 +318,13 @@ fun TwoBoxVoiceTranslatorScreen(
             contentColor = Color.White,          // Crisp High Contrast White Text
             testTagPrefix = "bottom_speaker",
             onChangeLanguage = { showBottomLangSheet = true },
-            onPressStart = { viewModel.startListeningBottom() },
+            onPressStart = {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                    viewModel.startListeningBottom()
+                } else {
+                    micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                }
+            },
             onPressStop = { viewModel.stopListeningBottom() },
             onSpeakOutput = { text ->
                 viewModel.speakText(text, topLang.code)
