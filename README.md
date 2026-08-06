@@ -48,13 +48,25 @@
 
 ## 🚀 Getting Started
 
-### Prerequisites
+### 📦 Quick Install (Pre-built APK)
+
+You can download the pre-compiled Android APK directly from the **[GitHub Releases](https://github.com/YOUR_USERNAME/TranslateGemma/releases)** section:
+
+1. Download the latest `app-release.apk` (or `app-debug.apk`) from the **Releases** tab.
+2. Open the file on your Android device (ensure "Install from Unknown Sources" is enabled in settings if prompted).
+3. Open **TranslateGemma** and start translating!
+
+---
+
+### 💻 Build from Source (For Developers)
+
+#### Prerequisites
 
 - Android Studio Ladybug (2024.2.1) or newer
 - JDK 17
 - Android SDK 24+ (Android 7.0+)
 
-### Installation
+#### Steps
 
 1. **Clone the repository**:
    ```bash
