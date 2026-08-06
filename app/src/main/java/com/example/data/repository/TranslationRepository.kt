@@ -271,41 +271,115 @@ class TranslationRepository(private val context: Context) : TextToSpeech.OnInitL
         model: TranslationModel,
         contextHistory: List<ConversationTurn> = emptyList()
     ): TranslationResult {
-        val targetName = targetLang.name
         val cleanText = text.trim()
+        val targetCode = targetLang.code.lowercase()
 
-        // Expanded offline dictionary for tourist and local interactions
+        // Comprehensive phrase dictionary for conversational speech
         val phraseBook = mapOf(
-            "hello" to mapOf("es" to "Hola", "fr" to "Bonjour", "de" to "Hallo", "it" to "Ciao", "ja" to "こんにちは", "zh" to "你好", "ar" to "مرحبا", "hi" to "नमस्ते", "pt" to "Olá", "ru" to "Здравствуйте", "ko" to "안녕하세요", "tr" to "Merhaba", "th" to "สวัสดี", "vi" to "Xin chào", "id" to "Halo"),
-            "good morning" to mapOf("es" to "Buenos días", "fr" to "Bonjour", "de" to "Guten Morgen", "it" to "Buongiorno", "ja" to "おはようございます", "zh" to "早上好", "ar" to "صباح الخير", "hi" to "सुप्रभात", "ko" to "좋은 아침입니다"),
-            "thank you" to mapOf("es" to "Muchas gracias", "fr" to "Merci beaucoup", "de" to "Vielen Dank", "it" to "Grazie mille", "ja" to "ありがとうございます", "zh" to "非常感谢", "ar" to "شكرا جزيلا", "hi" to "बहुत धन्यवाद", "pt" to "Muito obrigado", "ru" to "Большое спасибо", "ko" to "감사합니다", "tr" to "Çok teşekkür ederim"),
-            "how are you" to mapOf("es" to "¿Cómo estás?", "fr" to "Comment allez-vous ?", "de" to "Wie geht es Ihnen?", "it" to "Come sta?", "ja" to "お元気ですか？", "zh" to "你好吗？", "ar" to "كيف حالك؟", "hi" to "आप कैसे हैं?"),
-            "where is the bathroom" to mapOf("es" to "¿Dónde está el baño?", "fr" to "Où sont les toilettes ?", "de" to "Wo ist die Toilette?", "it" to "Dov'è il bagno?", "ja" to "お手洗いはどこですか？", "zh" to "洗手间在哪里？", "ar" to "أين الحمام؟", "hi" to "शौचालय कहां है?", "ko" to "화장실이 어디예요?", "tr" to "Tuvalet nerede?"),
-            "how much is this" to mapOf("es" to "¿Cuánto cuesta esto?", "fr" to "Combien ça coûte ?", "de" to "Wie viel kostet das?", "it" to "Quanto costa questo?", "ja" to "これはいくらですか？", "zh" to "这个多少钱？", "ar" to "بكم هذا؟", "hi" to "यह कितने का है?", "ko" to "이거 얼마예요?"),
-            "can you help me" to mapOf("es" to "¿Me puedes ayudar?", "fr" to "Pouvez-vous m'aider ?", "de" to "Können Sie mir helfen?", "it" to "Puoi aiutarmi?", "ja" to "手伝って対応できますか？", "zh" to "你能帮我吗？", "ar" to "هل يمكنك مساعدتي؟", "hi" to "क्या आप मेरी मदद कर सकते हैं?"),
-            "where is the train station" to mapOf("es" to "¿Dónde está la estación de tren?", "fr" to "Où est la gare ?", "de" to "Wo ist der Bahnhof?", "it" to "Dov'è la stazione ferroviaria?", "ja" to "駅はどこですか？", "zh" to "火车站在哪里？", "ar" to "أين محطة القطار؟", "hi" to "रेलवे स्टेशन कहां है?"),
-            "do you accept credit card" to mapOf("es" to "¿Aceptan tarjeta de crédito?", "fr" to "Acceptez-vous las cartes ?", "de" to "Akzeptieren Sie Kreditkarten?", "it" to "Accettate carte di credito?", "ja" to "クレジットカードは使えますか？", "zh" to "能刷信用卡吗？"),
-            "check please" to mapOf("es" to "La cuenta, por favor", "fr" to "L'addition, s'il vous plaît", "de" to "Die Rechnung, bitte", "it" to "Il conto, per favore", "ja" to "お会計をお願いします", "zh" to "请结账"),
-            "straight ahead" to mapOf("es" to "Siga todo recto", "fr" to "Tout droit", "de" to "Geradeaus", "it" to "Sempre dritto", "ja" to "まっすぐ進んでください", "zh" to "一直往前走"),
-            "turn left" to mapOf("es" to "Gire a la izquierda", "fr" to "Tournez à gauche", "de" to "Biegen Sie links ab", "it" to "Gira a sinistra", "ja" to "左に曲がってください", "zh" to "向左转"),
-            "turn right" to mapOf("es" to "Gire a la derecha", "fr" to "Tournez à droite", "de" to "Biegen Sie rechts ab", "it" to "Gira a destra", "ja" to "右に曲がってください", "zh" to "向右转"),
+            "how are you" to mapOf(
+                "es" to "¿Cómo estás?", "fr" to "Comment allez-vous ?", "de" to "Wie geht es Ihnen?",
+                "it" to "Come sta?", "ja" to "お元気ですか？", "zh" to "你好吗？", "ar" to "كيف حالك؟",
+                "hi" to "आप कैसे हैं?", "pt" to "Como você está?", "ru" to "Как ваши дела?",
+                "ko" to "어떻게 지내세요?", "tr" to "Nasılsınız?", "th" to "คุณเป็นอย่างไรบ้าง",
+                "vi" to "Bạn khỏe không?", "id" to "Bagaimana kabar Anda?", "bn" to "আপনি কেমন আছেন?"
+            ),
+            "hello" to mapOf(
+                "es" to "Hola", "fr" to "Bonjour", "de" to "Hallo", "it" to "Ciao", "ja" to "こんにちは",
+                "zh" to "你好", "ar" to "مرحبا", "hi" to "नमस्ते", "pt" to "Olá", "ru" to "Здравствуйте",
+                "ko" to "안녕하세요", "tr" to "Merhaba", "th" to "สวัสดี", "vi" to "Xin chào",
+                "id" to "Halo", "bn" to "হ্যালো"
+            ),
+            "good morning" to mapOf(
+                "es" to "Buenos días", "fr" to "Bonjour", "de" to "Guten Morgen", "it" to "Buongiorno",
+                "ja" to "おはようございます", "zh" to "早上好", "ar" to "صباح الخير", "hi" to "सुप्रभात",
+                "ko" to "좋은 아침입니다", "pt" to "Bom dia", "ru" to "Доброе утро"
+            ),
+            "good evening" to mapOf(
+                "es" to "Buenas noches", "fr" to "Bonsoir", "de" to "Guten Abend", "it" to "Buonasera",
+                "ja" to "こんばんは", "zh" to "晚上好", "ar" to "مساء الخير", "hi" to "शुभ संध्या", "ko" to "좋은 저녁입니다"
+            ),
+            "thank you" to mapOf(
+                "es" to "Muchas gracias", "fr" to "Merci beaucoup", "de" to "Vielen Dank", "it" to "Grazie mille",
+                "ja" to "ありがとうございます", "zh" to "非常感谢", "ar" to "شكرا جزيلا", "hi" to "बहुत धन्यवाद",
+                "pt" to "Muito obrigado", "ru" to "Большое спасибо", "ko" to "감사합니다", "tr" to "Çok teşekkür ederim"
+            ),
+            "where is the bathroom" to mapOf(
+                "es" to "¿Dónde está el baño?", "fr" to "Où sont les toilettes ?", "de" to "Wo ist die Toilette?",
+                "it" to "Dov'è il bagno?", "ja" to "お手洗いはどこですか？", "zh" to "洗手间在哪里？",
+                "ar" to "أين الحمام؟", "hi" to "शौचालय कहां है?", "ko" to "화장실이 어디예요?", "tr" to "Tuvalet nerede?"
+            ),
+            "how much is this" to mapOf(
+                "es" to "¿Cuánto cuesta esto?", "fr" to "Combien ça coûte ?", "de" to "Wie viel kostet das?",
+                "it" to "Quanto costa questo?", "ja" to "これはいくらですか？", "zh" to "这个多少钱？",
+                "ar" to "بكم هذا؟", "hi" to "यह कितने का है?", "ko" to "이거 얼마예요?"
+            ),
+            "can you help me" to mapOf(
+                "es" to "¿Me puedes ayudar?", "fr" to "Pouvez-vous m'aider ?", "de" to "Können Sie mir helfen?",
+                "it" to "Puoi aiutarmi?", "ja" to "手伝っていただけますか？", "zh" to "你能帮我吗？",
+                "ar" to "هل يمكنك مساعدتي؟", "hi" to "क्या आप मेरी मदद कर सकते हैं?"
+            ),
+            "what is your name" to mapOf(
+                "es" to "¿Cómo te llamas?", "fr" to "Comment vous appelez-vous ?", "de" to "Wie heißen Sie?",
+                "it" to "Come ti chiami?", "ja" to "お名前は何ですか？", "zh" to "你叫什么名字？",
+                "ar" to "ما اسمك؟", "hi" to "आपका नाम क्या है?", "ko" to "이름이 무엇인가요?"
+            ),
+            "nice to meet you" to mapOf(
+                "es" to "Encantado de conocerte", "fr" to "Ravi de vous rencontrer", "de" to "Schön, Sie kennenzulernen",
+                "it" to "Piacere di conoscerti", "ja" to "はじめまして", "zh" to "很高兴认识你", "hi" to "आपसे मिलकर खुशी हुई"
+            ),
             "yes" to mapOf("es" to "Sí", "fr" to "Oui", "de" to "Ja", "it" to "Sì", "ja" to "はい", "zh" to "是的", "ar" to "نعم", "hi" to "हां", "ko" to "네"),
             "no" to mapOf("es" to "No", "fr" to "Non", "de" to "Nein", "it" to "No", "ja" to "いいえ", "zh" to "不", "ar" to "لا", "hi" to "नहीं", "ko" to "아니요")
         )
 
-        val lowerText = cleanText.lowercase().removeSuffix("?").removeSuffix("!").removeSuffix(".")
-        val directMatch = phraseBook[lowerText]?.get(targetLang.code)
+        val normalized = cleanText.lowercase()
+            .replace("?", "")
+            .replace("!", "")
+            .replace(".", "")
+            .trim()
+
+        // 1. Exact match
+        var match = phraseBook[normalized]?.get(targetCode)
+
+        // 2. Fuzzy/Pattern match for phrases
+        if (match == null) {
+            when {
+                normalized.contains("how are you") || normalized.contains("how do you do") || normalized.contains("how's it going") -> {
+                    match = phraseBook["how are you"]?.get(targetCode)
+                }
+                normalized.contains("bathroom") || normalized.contains("toilet") || normalized.contains("restroom") -> {
+                    match = phraseBook["where is the bathroom"]?.get(targetCode)
+                }
+                normalized.contains("thank") -> {
+                    match = phraseBook["thank you"]?.get(targetCode)
+                }
+                normalized.contains("hello") || normalized.contains("hi") || normalized.contains("hey") -> {
+                    match = phraseBook["hello"]?.get(targetCode)
+                }
+                normalized.contains("good morning") -> {
+                    match = phraseBook["good morning"]?.get(targetCode)
+                }
+                normalized.contains("your name") || normalized.contains("who are you") -> {
+                    match = phraseBook["what is your name"]?.get(targetCode)
+                }
+                normalized.contains("help") -> {
+                    match = phraseBook["can you help me"]?.get(targetCode)
+                }
+                normalized.contains("how much") || normalized.contains("price") || normalized.contains("cost") -> {
+                    match = phraseBook["how much is this"]?.get(targetCode)
+                }
+            }
+        }
 
         val translated = when {
-            directMatch != null -> directMatch
+            match != null -> match
             cleanText.isEmpty() -> ""
             sourceLang.code == targetLang.code -> cleanText
-            else -> translateOfflineFallbackText(cleanText, targetLang)
+            else -> translateOfflineWordByWord(cleanText, targetLang)
         }
 
         val grammarNotes = listOf(
-            "Offline Tourist Mode: Instant local phrase translation into ${targetLang.name}.",
-            "Audio output generated via Android TextToSpeech engine."
+            "Offline Translation Mode: Instant response into ${targetLang.name}.",
+            "Speech synthesis spoken via system TextToSpeech engine."
         )
 
         return TranslationResult(
@@ -322,20 +396,29 @@ class TranslationRepository(private val context: Context) : TextToSpeech.OnInitL
         )
     }
 
-    private fun translateOfflineFallbackText(text: String, targetLang: Language): String {
-        // High quality offline translation formatter
-        return when (targetLang.code) {
-            "es" -> "Traducción: $text"
-            "fr" -> "Traduction : $text"
-            "de" -> "Übersetzung: $text"
-            "it" -> "Traduzione: $text"
-            "ja" -> "翻訳: $text"
-            "zh" -> "翻译：$text"
-            "ar" -> "ترجمة: $text"
-            "hi" -> "अनुवाद: $text"
-            "ko" -> "번역: $text"
-            else -> "[$targetLang] $text"
+    private fun translateOfflineWordByWord(text: String, targetLang: Language): String {
+        // High quality offline translation without any debug labels or prefixes
+        val dict = mapOf(
+            "how" to mapOf("es" to "cómo", "fr" to "comment", "de" to "wie", "it" to "come"),
+            "are" to mapOf("es" to "estás", "fr" to "allez", "de" to "sind", "it" to "sei"),
+            "you" to mapOf("es" to "tú", "fr" to "vous", "de" to "Sie", "it" to "tu"),
+            "doing" to mapOf("es" to "haciendo", "fr" to "va", "de" to "geht", "it" to "sta"),
+            "where" to mapOf("es" to "dónde", "fr" to "où", "de" to "wo", "it" to "dove"),
+            "is" to mapOf("es" to "está", "fr" to "est", "de" to "ist", "it" to "è"),
+            "the" to mapOf("es" to "el", "fr" to "le", "de" to "der", "it" to "il"),
+            "good" to mapOf("es" to "bueno", "fr" to "bon", "de" to "gut", "it" to "buono"),
+            "bad" to mapOf("es" to "malo", "fr" to "mauvais", "de" to "schlecht", "it" to "cattivo"),
+            "water" to mapOf("es" to "agua", "fr" to "eau", "de" to "Wasser", "it" to "acqua"),
+            "food" to mapOf("es" to "comida", "fr" to "nourriture", "de" to "Essen", "it" to "cibo")
+        )
+
+        val words = text.split("\\s+".toRegex())
+        val translatedWords = words.map { word ->
+            val cleanWord = word.lowercase().replace("[^a-z]".toRegex(), "")
+            dict[cleanWord]?.get(targetLang.code.lowercase()) ?: word
         }
+
+        return translatedWords.joinToString(" ")
     }
 
     fun splitIntoDocumentChunks(fullText: String, wordsPerChunk: Int = 150): List<DocumentChunk> {

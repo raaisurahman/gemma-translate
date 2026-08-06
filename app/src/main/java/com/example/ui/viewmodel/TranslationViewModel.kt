@@ -265,33 +265,14 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
             // Moderate context intensity: Pass up to 5 recent turns in chronological order
             val recentTurns = _conversationTurns.value.take(5).reversed()
 
-            val result = if (gemmaModelManager.isOnDeviceActive.value) {
-                val onDeviceTrans = gemmaModelManager.generateOnDeviceTranslation(
-                    prompt = text,
-                    sourceLang = sourceLang.code,
-                    targetLang = targetLang.code,
-                    contextHistory = recentTurns
-                )
-                Result.success(
-                    TranslationResult(
-                        translatedText = onDeviceTrans,
-                        sourceLangCode = sourceLang.code,
-                        targetLangCode = targetLang.code,
-                        detectedLanguage = sourceLang.name,
-                        tone = TranslationTone.STANDARD,
-                        modelUsed = TranslationModel.GEMMA_3_12B
-                    )
-                )
-            } else {
-                repository.translateText(
-                    text = text,
-                    sourceLang = sourceLang,
-                    targetLang = targetLang,
-                    tone = TranslationTone.STANDARD,
-                    model = TranslationModel.GEMMA_3_12B,
-                    contextHistory = recentTurns
-                )
-            }
+            val result = repository.translateText(
+                text = text,
+                sourceLang = sourceLang,
+                targetLang = targetLang,
+                tone = TranslationTone.STANDARD,
+                model = if (gemmaModelManager.isOnDeviceActive.value) TranslationModel.GEMMA_3_12B else _selectedModel.value,
+                contextHistory = recentTurns
+            )
 
             result.onSuccess { res ->
                 val translated = res.translatedText

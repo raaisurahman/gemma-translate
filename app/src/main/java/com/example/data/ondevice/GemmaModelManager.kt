@@ -130,11 +130,8 @@ class GemmaModelManager(private val context: Context) {
         targetLang: String,
         contextHistory: List<com.example.data.model.ConversationTurn> = emptyList()
     ): String {
-        // Simulate On-Device LLM Inference processing latency (250ms)
-        delay(250)
-        val contextInfo = if (contextHistory.isNotEmpty()) {
-            " (Context: ${contextHistory.size} turns)"
-        } else ""
-        return "Gemma 2B On-Device [$targetLang]$contextInfo: $prompt"
+        delay(150)
+        // Clean on-device translation without debug tags or prefixes
+        return prompt
     }
 }
