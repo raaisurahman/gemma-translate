@@ -1,0 +1,6 @@
+{
+  "name": "Gemma Translator",
+  "description": "Multilingual AI translation app powered by Google Gemma models with tone adjustment, document chunking, dictionary, side-by-side comparison, and voice output.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
